@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+</style>
+<title>Site Daily Report Helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@800&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: a black site signboard with a hazard stripe on top, numbered steps on graph paper, then the report as a site register with colour-coded sections. */
+:root {
+  --bg: #ECEAE4;
+  --grid: rgba(30, 33, 37, .07);
+  --surface: #FFFFFF;
+  --tile: #F4F2EC;
+  --rule: #E6E2D8;
+  --ink: #1E2125;
+  --muted: #5A5F66;
+  --line: #CFCBC1;
+  --accent: #FFC20E;
+  --accent-2: #EBAA00;
+  --accent-shadow: #1E2125;
+  --on-accent: #1E2125;
+  --shadow: #1E2125;
+  --focus: #1E2125;
+
+  --board: #1E2125;
+  --board-edge: #1E2125;
+  --board-ink: #F6F3EA;
+  --board-muted: #BDB9AF;
+
+  --c-work: #2F7D4A;
+  --c-manpower: #2563A8;
+  --c-material: #C45A12;
+  --c-problems: #B3361A;
+  --c-plan: #6B4BA8;
+  --on-c: #FFFFFF;
+  --alert: #B3361A;
+  --alert-wash: #FBE8E2;
+  --ok: #2F7D4A;
+  --ok-wash: #E2F1E7;
+  --mat-wash: #FBEADB;
+
+  --f-head: 'Archivo', 'Noto Sans Devanagari', system-ui, sans-serif;
+  --f-body: 'Noto Sans', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --f-mono: 'IBM Plex Mono', 'Noto Sans Devanagari', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131518; --grid: rgba(255, 255, 255, .045); --surface: #1E2126; --tile: #272B31; --rule: #2B2F35;
+    --ink: #F1EFE9; --muted: #A5AAB1; --line: #3A3E44; --accent-shadow: #9A7400; --shadow: #000000; --focus: #FFC20E;
+    --board: #0D0F11; --board-edge: #3A3E44;
+    --c-work: #5FC088; --c-manpower: #6FA8F0; --c-material: #F59B55; --c-problems: #FF8C6B; --c-plan: #B79CF0; --on-c: #15171A;
+    --alert: #FF8C6B; --alert-wash: #3A2420; --ok: #5FC088; --ok-wash: #1F3427; --mat-wash: #3A2A1C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131518; --grid: rgba(255, 255, 255, .045); --surface: #1E2126; --tile: #272B31; --rule: #2B2F35;
+  --ink: #F1EFE9; --muted: #A5AAB1; --line: #3A3E44; --accent-shadow: #9A7400; --shadow: #000000; --focus: #FFC20E;
+  --board: #0D0F11; --board-edge: #3A3E44;
+  --c-work: #5FC088; --c-manpower: #6FA8F0; --c-material: #F59B55; --c-problems: #FF8C6B; --c-plan: #B79CF0; --on-c: #15171A;
+  --alert: #FF8C6B; --alert-wash: #3A2420; --ok: #5FC088; --ok-wash: #1F3427; --mat-wash: #3A2A1C;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: var(--ink);
+  font: 400 18px/1.5 var(--f-body);
+  padding-block: 16px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+
+/* Signboard */
+.board { background: var(--board); color: var(--board-ink); border: 2px solid var(--board-edge); border-radius: 8px; overflow: hidden; }
+.stripe { height: 14px; background: repeating-linear-gradient(-45deg, var(--accent) 0 14px, #15171A 14px 28px); }
+.bin { position: relative; padding: 18px 18px 18px; }
+.crane { position: absolute; top: 14px; right: 14px; width: 64px; height: auto; color: var(--accent); }
+h1 { margin: 0 0 8px; padding-right: 76px; font: 800 clamp(26px, 7vw, 36px)/1.08 var(--f-head); text-wrap: balance; }
+.sub { margin: 0 0 14px; font-size: 16px; color: var(--board-muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tags span { font: 600 12px/1 var(--f-mono); letter-spacing: .04em; padding: 6px 9px; border: 1.5px solid var(--board-muted); border-radius: 4px; color: var(--board-ink); }
+
+/* Steps */
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.step { display: flex; align-items: center; gap: 10px; margin: 0; font: 600 14px/1.3 var(--f-mono); letter-spacing: .02em; }
+.step .n { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--bg); font: 700 15px/1 var(--f-mono); }
+.step .hi { color: var(--muted); font-family: var(--f-body); font-weight: 600; }
+
+textarea {
+  display: block; width: 100%; min-height: 240px; resize: vertical;
+  font: 400 18px/27px var(--f-body); color: var(--ink);
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 26px, var(--rule) 26px 27px);
+  background-position: 0 14px; background-attachment: local;
+  border: 2px solid var(--ink); border-radius: 8px; padding: 14px;
+}
+textarea::placeholder { color: var(--muted); }
+.hint { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
+
+.lang-label { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+.lang-label .hi { font-weight: 600; color: var(--muted); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg .opt {
+  min-height: 54px; padding: 8px 12px; font: 700 18px/1.2 var(--f-body); color: var(--ink);
+  background: transparent; border: 0; cursor: pointer;
+}
+.seg .opt + .opt { border-left: 2px solid var(--ink); }
+.seg .opt[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+
+/* Buttons */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; min-height: 66px; padding: 10px 16px;
+  font: 700 20px/1.2 var(--f-body); text-align: center; text-decoration: none; cursor: pointer;
+  color: var(--ink); background: var(--surface);
+  border: 2px solid var(--ink); border-radius: 8px;
+  box-shadow: 0 4px 0 var(--shadow);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.btn svg { flex: none; width: 24px; height: 24px; }
+.btn .lbl { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.btn .hi { font-size: 15px; font-weight: 600; opacity: .85; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--on-accent); box-shadow: 0 5px 0 var(--accent-shadow); }
+.btn.small { min-height: 56px; font-size: 17px; }
+.btn.small .hi { font-size: 14px; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shadow); }
+.btn.primary:active { box-shadow: 0 2px 0 var(--accent-shadow); }
+.btn:disabled { opacity: .65; cursor: progress; }
+.btn.primary.busy {
+  opacity: 1;
+  background-image: repeating-linear-gradient(-45deg, var(--accent) 0 14px, var(--accent-2) 14px 28px);
+  background-size: 39.6px 39.6px;
+  animation: slide .8s linear infinite;
+}
+@keyframes slide { to { background-position: 39.6px 0; } }
+.btn:focus-visible, .seg .opt:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Report sheet */
+.sheet { background: var(--surface); border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.rhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px; background: var(--tile); border-bottom: 2px solid var(--ink); }
+.rhead .t { min-width: 0; }
+.rhead h2 { margin: 0 0 8px; font: 800 24px/1.15 var(--f-head); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 600 12px/1.2 var(--f-mono); padding: 4px 8px; border: 1.5px solid currentColor; border-radius: 4px; }
+.chip.bad { color: var(--alert); background: var(--alert-wash); }
+.chip.ok { color: var(--ok); background: var(--ok-wash); }
+.chip.mat { color: var(--c-material); background: var(--mat-wash); }
+.chip.ex { color: var(--on-accent); background: var(--accent); border-color: var(--on-accent); }
+.stamp { flex: none; min-width: 66px; text-align: center; padding: 5px 10px 7px; border: 2px solid var(--ink); border-radius: 6px; background: var(--surface); }
+.stamp .wd, .stamp .my { display: block; font: 600 11px/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.stamp .d { display: block; font: 800 30px/1.05 var(--f-head); font-variant-numeric: tabular-nums; }
+
+.sec { padding: 16px; border-bottom: 1px solid var(--line); }
+.sec:last-child { border-bottom: 0; }
+.sec[data-k="work"] { --c: var(--c-work); }
+.sec[data-k="manpower"] { --c: var(--c-manpower); }
+.sec[data-k="material"] { --c: var(--c-material); }
+.sec[data-k="problems"] { --c: var(--c-problems); }
+.sec[data-k="plan"] { --c: var(--c-plan); }
+.sec[data-k="problems"].has { background: var(--alert-wash); }
+.sh { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ic { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; background: var(--c); color: var(--on-c); }
+.ic svg { width: 20px; height: 20px; }
+.sh h3 { flex: 1; min-width: 0; margin: 0; font: 600 13px/1.3 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.sheet[lang="hi"] .sh h3 { letter-spacing: 0; text-transform: none; font: 700 17px/1.3 var(--f-body); }
+.cnt { flex: none; font: 600 12px/1 var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 3px 7px; font-variant-numeric: tabular-nums; }
+.sec ul { margin: 0; padding-left: 1.2em; list-style: square; }
+.sec li { margin: 4px 0; font-size: 17px; line-height: 1.5; overflow-wrap: anywhere; }
+.none { margin: 0; color: var(--muted); font-style: italic; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; margin-bottom: 4px; }
+.tile { min-width: 0; padding: 10px 12px; background: var(--tile); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; }
+.tile .num { font: 800 32px/1.05 var(--f-head); font-variant-numeric: tabular-nums; }
+.tile .lab { font-size: 15px; color: var(--muted); overflow-wrap: anywhere; }
+.tile.total { grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: space-between; background: var(--accent); border-color: var(--on-accent); color: var(--on-accent); }
+.tile.total .lab { color: var(--on-accent); font-weight: 700; }
+
+.fresh .sec { animation: rise .45s ease both; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+
+.note { margin: 0; font-size: 15px; color: var(--muted); }
+#manual { min-height: 160px; font-size: 16px; line-height: 1.5; background-image: none; }
+[hidden] { display: none !important; }
+@media (min-width: 520px) {
+  .crane { width: 88px; top: 16px; right: 18px; }
+  h1 { padding-right: 104px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fresh .sec, .btn.primary.busy { animation: none; }
+  .btn { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="board">
+    <div class="stripe" aria-hidden="true"></div>
+    <div class="bin">
+      <svg class="crane" viewBox="0 0 120 100" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M40 96V30M50 96V30"/>
+        <path d="M40 96L50 84L40 72L50 60L40 48L50 36"/>
+        <path d="M16 28H116"/>
+        <path d="M45 10V28"/>
+        <path d="M45 10L108 28M45 10L22 28"/>
+        <path d="M14 28V38H26V28"/>
+        <path d="M92 28V60"/>
+        <path d="M86 60H98V68H86Z"/>
+      </svg>
+      <h1>Site Daily Report Helper</h1>
+      <p class="sub">Rough notes likho, jaise bhi yaad ho. Saaf report ban jayegi.</p>
+      <div class="tags" aria-label="Accepted languages"><span lang="hi">हिन्दी</span><span>English</span><span>Hinglish</span></div>
+    </div>
+  </header>
+
+  <section class="stack" aria-label="Notes">
+    <label class="step" for="notes"><span class="n">1</span><span>Notes likho <span class="hi" lang="hi">· नोट्स लिखो</span></span></label>
+    <div>
+      <textarea id="notes" rows="9" autocomplete="off" autocapitalize="sentences"
+        placeholder="Jaise: aaj 2nd floor ka plaster complete hua, 8 mistri 10 helper aaye, cement 30 bag kal tak chahiye, barish se 2 ghante kaam ruka..."></textarea>
+      <p class="hint" id="exampleHint">Example notes loaded. Box par tap karo aur apne notes likho.</p>
+    </div>
+
+    <p class="step"><span class="n">2</span><span>Report banao <span class="hi" lang="hi">· रिपोर्ट बनाओ</span></span></p>
+    <div>
+      <p class="lang-label">Report language <span class="hi" lang="hi">· रिपोर्ट की भाषा</span></p>
+      <div class="seg" role="group" aria-label="Report language">
+        <button type="button" class="opt" id="langEn" aria-pressed="true">English</button>
+        <button type="button" class="opt" id="langHi" aria-pressed="false" lang="hi">हिन्दी</button>
+      </div>
+    </div>
+
+    <button type="button" class="btn primary" id="make">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l1 2h3v14H5V6h3z"/><path d="M9 12h6M9 16h4"/></svg>
+      <span class="lbl"><span class="big">Make Report</span><span class="hi" lang="hi">रिपोर्ट बनाओ</span></span>
+    </button>
+    <div class="row2">
+      <button type="button" class="btn small" id="clear"><span class="lbl"><span class="big">Clear</span><span class="hi" lang="hi">साफ़ करें</span></span></button>
+      <button type="button" class="btn small" id="exampleBtn"><span class="lbl"><span class="big">Example</span><span class="hi" lang="hi">उदाहरण</span></span></button>
+    </div>
+    <p class="note" id="msg" role="status" hidden></p>
+  </section>
+
+  <section class="stack" id="reportArea" aria-label="Report" hidden>
+    <div class="sheet" id="sheet" lang="en">
+      <div class="rhead">
+        <div class="t">
+          <h2 id="rTitle">Site Daily Report</h2>
+          <div class="chips" id="rChips"></div>
+        </div>
+        <div class="stamp" id="rStamp" aria-label="Report date"><span class="wd" id="rWd"></span><span class="d" id="rDay"></span><span class="my" id="rMy"></span></div>
+      </div>
+      <div id="rBody"></div>
+    </div>
+
+    <p class="step"><span class="n">3</span><span>Copy ya bhejo <span class="hi" lang="hi">· कॉपी करो या भेजो</span></span></p>
+    <button type="button" class="btn primary" id="copy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>
+      <span class="lbl"><span class="big">Copy Report</span><span class="hi" lang="hi">रिपोर्ट कॉपी करो</span></span>
+    </button>
+    <a class="btn" id="wa" href="https://wa.me/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L3 11l7 3 3 7z"/><path d="M10 14L21 3"/></svg>
+      <span class="lbl"><span class="big">Send on WhatsApp</span><span class="hi" lang="hi">व्हाट्सऐप पर भेजो</span></span>
+    </a>
+    <textarea id="manual" readonly hidden aria-label="Report text to copy"></textarea>
+    <p class="note" id="modeNote"></p>
+  </section>
+</main>
+
+<script>
+(function () {
+  /*PARSER-START*/
+  var norm = function (s) {
+    return s.normalize('NFD').replace(/़/g, '').replace(/ँ/g, 'ं').normalize('NFC')
+      .toLowerCase().replace(/[०-९]/g, function (d) { return '०१२३४५६७८९'.indexOf(d); });
+  };
+  var SET = function (a) { return new Set(a.split(/\s+/).filter(Boolean).map(norm)); };
+
+  var WORKER = SET('mason masons mistri mistry mistris rajmistri rajmistry labour labor labours labourer labourers majdoor majdur mazdoor mazdur helper helpers beldar carpenter carpenters barbender fitter fitters welder welders plumber plumbers electrician electricians painter painters operator operators driver drivers supervisor supervisors engineer engineers foreman worker workers kaamgar kamgar kaarigar karigar aadmi admi log men ladies mahila women tiler tilers rigger riggers ' +
+    'मिस्त्री मिस्त्रि राजमिस्त्री मजदूर मज़दूर मजदूरों हेल्पर बेलदार कारपेंटर बढ़ई फिटर वेल्डर प्लंबर इलेक्ट्रीशियन पेंटर ऑपरेटर ड्राइवर सुपरवाइजर इंजीनियर कारीगर कारीगरों कामगार आदमी लोग महिला औरत वर्कर मिस्त्रियों');
+  var FILLER = SET('aaj aaye aaya aayi the thi tha thay hai hain ho hue hua ne ka ki ke ko aur and me mein se present came attended total sab sabhi workers worker labour labor manpower men log today bhi ' +
+    'की का के को और में से थे था थी है हैं आए आया आज लोग कुल उपस्थित भी');
+  var NEED = SET('chahiye chahiya chaiye chahie lagega lagenge lagegi required require need needed mangwana mangwao mangvana order short khatam jarurat zaroorat zarurat ' +
+    'चाहिए चाहिये लगेगा लगेंगे लगेगी मंगवाना मंगवाओ मंगाना जरूरत ज़रूरत खत्म ख़त्म कमी');
+  var FUT = SET('tomorrow tmrw tomorow karna karni karana will plan next agle agli parso ' +
+    'करना करनी परसों अगले अगली योजना प्लान');
+  var KAL = SET('kal कल');
+  var PAST = SET('tha thi the thay kiya kiye kiyi hua hui hue gaya gayi gaye aaya aayi aaye done completed complete finished yesterday ' +
+    'था थी थे किया किये हुआ हुई हुए गया गई गए आया आई आए');
+  var PROB = SET('problem problems issue issues dikkat samasya pareshani delay delayed late barish baarish barsat rain rained raining breakdown kharab kharaab band ruka ruki ruke ruk rukawat shortage kami absent gayab leak leakage complaint accident injury chot damage crack toot tuta tooti wrong galat dispute jhagda strike hadtal ' +
+    'दिक्कत समस्या परेशानी देरी लेट बारिश बरसात खराब बंद रुका रुकी रुके रुकावट गायब लीक शिकायत हादसा चोट टूट टूटा टूटी गलत झगड़ा हड़ताल');
+  var NEG = SET('nahi nhi नहीं नही');
+  var NEGCTX = SET('aaya aayi aaye mila mili mile hua hui आया आई आए मिला मिली मिले हुआ हुई');
+
+  var FUT_END_LATIN = /(?:enge|ega|egi|onge|oga|ogi|unga|ungi)$/;
+  var FUT_END_DEVA = /(?:ेंगे|ेगा|ेगी|ूंगा|ूंगी|ोगा|ोगी|ोंगे)$/;
+
+  var tok = function (s) { return norm(s).split(/[^\p{L}\p{M}\p{N}]+/u).filter(Boolean); };
+  var isNum = function (t) { return /^\d+$/.test(t || ''); };
+  var cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+  var futureTok = function (t) { return FUT.has(t) || FUT_END_LATIN.test(t) || FUT_END_DEVA.test(t); };
+
+  function fragments(text) {
+    return text.replace(/(\d)\.(\d)/g, '$1\u0001$2')
+      .split(/\n+|[.;|।•]+/)
+      .map(function (f) {
+        return f.replace(/\u0001/g, '.').replace(/^\s*(?:[-–—*·]+|\d{1,2}[.)])\s+/, '').replace(/\s+/g, ' ').trim();
+      })
+      .filter(function (f) { return f.length > 1; });
+  }
+
+  function manpowerPairs(t) {
+    var style = null, i, res = [];
+    for (i = 0; i < t.length - 1; i++) {
+      if (isNum(t[i]) && WORKER.has(t[i + 1])) { style = 'nw'; break; }
+      if (WORKER.has(t[i]) && isNum(t[i + 1])) { style = 'wn'; break; }
+    }
+    if (!style) return res;
+    for (i = 0; i < t.length - 1; i++) {
+      if (style === 'nw' && isNum(t[i]) && WORKER.has(t[i + 1])) { res.push({ i: i, j: i + 1, n: +t[i], w: t[i + 1] }); i++; }
+      else if (style === 'wn' && WORKER.has(t[i]) && isNum(t[i + 1])) { res.push({ i: i, j: i + 1, n: +t[i + 1], w: t[i] }); i++; }
+    }
+    return res;
+  }
+
+  function classify(t) {
+    var has = function (set) { return t.some(function (x) { return set.has(x); }); };
+    if (has(NEED)) return 'material';
+    var fut = t.some(futureTok);
+    var prob = has(PROB) || (has(NEG) && has(NEGCTX));
+    if (fut) return 'plan';
+    if (prob) return 'problems';
+    if (has(KAL) && !has(PAST)) return 'plan';
+    return 'work';
+  }
+
+  function clean(f) {
+    f = f.replace(/[\s,:\-–]+$/, '').trim();
+    return cap(f);
+  }
+
+  function parse(text, lang) {
+    var out = { work: [], manpower: [], material: [], problems: [], plan: [] };
+    var mp = [];
+    fragments(text).forEach(function (frag) {
+      var t = tok(frag);
+      if (!t.length) return;
+      var pairs = manpowerPairs(t);
+      var used = new Set();
+      pairs.forEach(function (p) { used.add(p.i); used.add(p.j); });
+      var left = t.filter(function (x, i) { return !used.has(i) && !FILLER.has(x) && !isNum(x); }).length;
+      var kind = classify(t);
+      if (pairs.length && left === 0) { mp = mp.concat(pairs); return; }
+      if (pairs.length && kind === 'work') mp = mp.concat(pairs);
+      out[kind].push(clean(frag));
+    });
+    out.manpower = mp.map(function (p) { return p.n + ' ' + cap(p.w); });
+    if (mp.length > 1) {
+      var sum = mp.reduce(function (a, p) { return a + p.n; }, 0);
+      out.manpower.push((lang === 'hi' ? 'कुल' : 'Total') + ': ' + sum);
+    }
+    return out;
+  }
+  /*PARSER-END*/
+
+  if (typeof document === 'undefined') { return; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var SECTIONS = [
+    { key: 'work', en: 'Work Done', hi: 'किया गया काम' },
+    { key: 'manpower', en: 'Manpower', hi: 'मैनपावर' },
+    { key: 'material', en: 'Material Needed', hi: 'ज़रूरी सामान' },
+    { key: 'problems', en: 'Problems', hi: 'दिक्कतें' },
+    { key: 'plan', en: 'Plan for Tomorrow', hi: 'कल की योजना' }
+  ];
+  var ICONS = {
+    work: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    manpower: '<circle cx="9" cy="8" r="3"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14c3 0 5 2.2 5 5"/>',
+    material: '<rect x="3" y="14" width="8" height="6"/><rect x="13" y="14" width="8" height="6"/><rect x="8" y="7" width="8" height="6"/>',
+    problems: '<path d="M12 4l9 16H3z"/><path d="M12 10v5M12 17.5v.5"/>',
+    plan: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>'
+  };
+  var TITLE = { en: 'Site Daily Report', hi: 'साइट डेली रिपोर्ट' };
+  var NONE = { en: 'Nothing noted', hi: 'कुछ नहीं बताया' };
+  var EXAMPLE = [
+    'aaj 3rd floor slab ka shuttering complete hua, 2 side ka bar bending baaki hai',
+    '12 mistri, 20 helper, 4 carpenter aaye',
+    'cement 50 bag aur 10mm saria 2 ton kal tak chahiye',
+    'sand ka truck late aaya, 2 ghante kaam ruka',
+    'mixer machine खराब हो गयी थी',
+    'कल slab ki ढलाई शुरू करेंगे, subah 7 baje concrete pump aayega'
+  ].join('\n');
+
+  var notes = $('notes'), make = $('make'), copyBtn = $('copy'), wa = $('wa'), sheet = $('sheet');
+  var lang = 'en', isExample = false, data = null, mode = 'basic', busy = false;
+  var KEY = 'sdrh-notes';
+
+  var samplePromise = (window.claude && window.claude.use)
+    ? Promise.resolve(window.claude.use('sample')).catch(function () { return null; })
+    : Promise.resolve(null);
+
+  function msg(t) { var m = $('msg'); m.textContent = t || ''; m.hidden = !t; }
+  function store(v) { try { if (v) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch (e) {} }
+  function load() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  function locale() { return lang === 'hi' ? 'hi-IN' : 'en-IN'; }
+
+  function dateLabel() {
+    try {
+      return new Date().toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) { return new Date().toDateString(); }
+  }
+
+  function chip(cls, text) {
+    var c = document.createElement('span');
+    c.className = 'chip ' + cls;
+    c.textContent = text;
+    return c;
+  }
+
+  function tiles(items) {
+    var grid = document.createElement('div');
+    grid.className = 'tiles';
+    var rest = [];
+    items.forEach(function (x) {
+      var n = null, l = null, m = /^\s*(\d+)\s+(.+)$/.exec(x);
+      if (m) { n = m[1]; l = m[2]; }
+      else {
+        m = /^\s*(.+?)\s*[:\-–]\s*(\d+)\s*$/.exec(x);
+        if (m) { l = m[1]; n = m[2]; }
+      }
+      if (n === null) { rest.push(x); return; }
+      var t = document.createElement('div');
+      var isTotal = /^(total|कुल)$/i.test(l.trim());
+      t.className = 'tile' + (isTotal ? ' total' : '');
+      var num = document.createElement('span'); num.className = 'num'; num.textContent = n;
+      var lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = l;
+      if (isTotal) { t.appendChild(lab); t.appendChild(num); } else { t.appendChild(num); t.appendChild(lab); }
+      grid.appendChild(t);
+    });
+    var frag = document.createDocumentFragment();
+    if (grid.children.length) frag.appendChild(grid);
+    if (rest.length) {
+      var ul = document.createElement('ul');
+      rest.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+      frag.appendChild(ul);
+    }
+    return frag;
+  }
+
+  function render() {
+    if (!data) return;
+    $('reportArea').hidden = false;
+    sheet.lang = lang;
+    $('rTitle').textContent = TITLE[lang];
+
+    var d = new Date();
+    try {
+      $('rWd').textContent = d.toLocaleDateString(locale(), { weekday: 'short' });
+      $('rMy').textContent = d.toLocaleDateString(locale(), { month: 'short', year: 'numeric' });
+    } catch (e) { $('rWd').textContent = ''; $('rMy').textContent = ''; }
+    $('rDay').textContent = String(d.getDate());
+
+    var chips = $('rChips');
+    chips.textContent = '';
+    if (isExample) chips.appendChild(chip('ex', lang === 'hi' ? 'उदाहरण' : 'EXAMPLE'));
+    var np = (data.problems || []).length, nm = (data.material || []).length;
+    if (np) chips.appendChild(chip('bad', lang === 'hi' ? np + ' दिक्कत' : np + (np === 1 ? ' problem' : ' problems')));
+    else chips.appendChild(chip('ok', lang === 'hi' ? 'कोई दिक्कत नहीं' : 'No problems'));
+    if (nm) chips.appendChild(chip('mat', lang === 'hi' ? nm + ' सामान की ज़रूरत' : nm + (nm === 1 ? ' material request' : ' material requests')));
+
+    var body = $('rBody');
+    body.textContent = '';
+    SECTIONS.forEach(function (s, idx) {
+      var items = data[s.key] || [];
+      var sec = document.createElement('div');
+      sec.className = 'sec' + (items.length ? ' has' : '');
+      sec.setAttribute('data-k', s.key);
+      sec.style.setProperty('--i', idx);
+
+      var head = document.createElement('div');
+      head.className = 'sh';
+      var ic = document.createElement('span');
+      ic.className = 'ic';
+      ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[s.key] + '</svg>';
+      var h = document.createElement('h3');
+      h.textContent = s[lang];
+      head.appendChild(ic);
+      head.appendChild(h);
+      if (items.length) {
+        var cnt = document.createElement('span');
+        cnt.className = 'cnt';
+        cnt.textContent = String(items.length);
+        head.appendChild(cnt);
+      }
+      sec.appendChild(head);
+
+      if (!items.length) {
+        var p = document.createElement('p');
+        p.className = 'none';
+        p.textContent = NONE[lang];
+        sec.appendChild(p);
+      } else if (s.key === 'manpower') {
+        sec.appendChild(tiles(items));
+      } else {
+        var ul = document.createElement('ul');
+        items.forEach(function (x) { var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+        sec.appendChild(ul);
+      }
+      body.appendChild(sec);
+    });
+
+    $('modeNote').textContent = isExample
+      ? 'This is an example. Apne notes likhkar Make Report dabao.'
+      : (mode === 'claude'
+        ? 'Written by Claude from your notes. Numbers aur quantity bhejne se pehle ek baar check kar lo.'
+        : 'Sorted by keywords on this phone. Bhejne se pehle ek baar check kar lo.');
+    wa.href = 'https://wa.me/?text=' + encodeURIComponent(buildText());
+  }
+
+  function buildText() {
+    var lines = ['*' + TITLE[lang] + '*', dateLabel(), ''];
+    SECTIONS.forEach(function (s) {
+      lines.push('*' + s[lang] + '*');
+      var items = data[s.key] || [];
+      if (items.length) items.forEach(function (x) { lines.push('- ' + x); });
+      else lines.push('- ' + NONE[lang]);
+      lines.push('');
+    });
+    return lines.join('\n').trim();
+  }
+
+  function claudePrompt(text) {
+    return [
+      'You are helping a construction site supervisor in India write a daily site report.',
+      'Below are his rough notes. They may be in Hindi (Devanagari), English, or Hinglish (Hindi in Roman letters), often mixed, with spelling mistakes and no punctuation.',
+      'Return ONLY a JSON object with exactly these keys, each an array of short strings:',
+      '{"work_done":[],"manpower":[],"material_needed":[],"problems":[],"plan_tomorrow":[]}',
+      'Rules:',
+      '- One fact per item, plain words, easy to read on a phone.',
+      '- Use only what the notes say. Never invent numbers, quantities, names, times or dates. If something is unclear, keep it as written.',
+      '- work_done: work completed or in progress today.',
+      '- manpower: each trade with its count, like "Mason: 12". Add a last item "Total: N" only if every count is clear.',
+      '- material_needed: material to be ordered or needed, with quantity and by when if given.',
+      '- problems: delays, machine breakdowns, weather, shortages, safety or any trouble on site.',
+      '- plan_tomorrow: what is planned for tomorrow or next.',
+      '- Put each fact in the single best section. An empty section is [].',
+      '- Write the items in ' + (lang === 'hi' ? 'Hindi (Devanagari script). Keep units like bag, ton, mm and floor numbers readable.' : 'simple English. Keep units like bag, ton, mm and floor numbers as the supervisor used them.'),
+      '',
+      'NOTES:',
+      '"""',
+      text,
+      '"""'
+    ].join('\n');
+  }
+
+  async function askClaude(text) {
+    var sample = await samplePromise;
+    if (!sample) return null;
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, 45000);
+    try {
+      var r = await sample(claudePrompt(text), { signal: ctl.signal, cache: false, modelTier: 'quick' });
+      var t = (r && r.text) || '';
+      var a = t.indexOf('{'), b = t.lastIndexOf('}');
+      if (a < 0 || b <= a) return null;
+      var j = JSON.parse(t.slice(a, b + 1));
+      var map = { work: 'work_done', manpower: 'manpower', material: 'material_needed', problems: 'problems', plan: 'plan_tomorrow' };
+      var out = {};
+      Object.keys(map).forEach(function (k) {
+        var arr = Array.isArray(j[map[k]]) ? j[map[k]] : [];
+        out[k] = arr.map(function (x) { return String(x).trim(); }).filter(Boolean).slice(0, 40);
+      });
+      return out;
+    } catch (e) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function setBusy(on) {
+    busy = on;
+    make.disabled = on;
+    make.classList.toggle('busy', on);
+    make.querySelector('.big').textContent = on ? 'Making report…' : 'Make Report';
+    make.querySelector('.hi').textContent = on ? 'रिपोर्ट बन रही है…' : 'रिपोर्ट बनाओ';
+  }
+
+  async function generate() {
+    if (busy) return;
+    var text = notes.value.trim();
+    if (!text) { msg('Pehle apne notes likho. पहले नोट्स लिखिए।'); notes.focus(); return; }
+    msg('');
+    setBusy(true);
+    var res = null;
+    try { res = await askClaude(text); } catch (e) { res = null; }
+    mode = res ? 'claude' : 'basic';
+    data = res || parse(text, lang);
+    isExample = false;
+    $('exampleHint').hidden = true;
+    setBusy(false);
+    sheet.classList.add('fresh');
+    render();
+    $('reportArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showExample() {
+    notes.value = EXAMPLE;
+    isExample = true;
+    mode = 'basic';
+    data = parse(EXAMPLE, lang);
+    $('exampleHint').hidden = false;
+    msg('');
+    render();
+  }
+
+  function setLang(l) {
+    lang = l;
+    $('langEn').setAttribute('aria-pressed', String(l === 'en'));
+    $('langHi').setAttribute('aria-pressed', String(l === 'hi'));
+    if (isExample) { data = parse(EXAMPLE, lang); render(); }
+    else if (data) generate();
+  }
+
+  var flashTimer = null;
+  function flash() {
+    var big = copyBtn.querySelector('.big'), hi = copyBtn.querySelector('.hi');
+    big.textContent = 'Copied'; hi.textContent = 'कॉपी हो गया';
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function () { big.textContent = 'Copy Report'; hi.textContent = 'रिपोर्ट कॉपी करो'; }, 2200);
+  }
+
+  function manualCopy(text) {
+    var box = $('manual');
+    box.hidden = false;
+    box.value = text;
+    box.focus();
+    box.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    if (ok) { flash(); box.hidden = true; }
+    else msg('Copy nahi hua. Neeche ke box ko dabake rakho aur Copy chuno.');
+  }
+
+  copyBtn.addEventListener('click', function () {
+    if (!data) return;
+    var text = buildText();
+    msg('');
+    var p;
+    try { p = navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) { p = null; }
+    if (p && p.then) p.then(flash, function () { manualCopy(text); });
+    else manualCopy(text);
+  });
+
+  make.addEventListener('click', generate);
+  $('clear').addEventListener('click', function () {
+    notes.value = '';
+    isExample = false; data = null;
+    $('exampleHint').hidden = true;
+    $('reportArea').hidden = true;
+    $('manual').hidden = true;
+    msg('');
+    store('');
+    notes.focus();
+  });
+  $('exampleBtn').addEventListener('click', function () {
+    $('manual').hidden = true;
+    store('');
+    showExample();
+  });
+  $('langEn').addEventListener('click', function () { if (lang !== 'en') setLang('en'); });
+  $('langHi').addEventListener('click', function () { if (lang !== 'hi') setLang('hi'); });
+  notes.addEventListener('focus', function () { if (isExample) notes.select(); });
+  notes.addEventListener('input', function () {
+    if (isExample) { isExample = false; $('exampleHint').hidden = true; if (data) render(); }
+    store(notes.value);
+  });
+
+  var draft = load();
+  if (draft.trim()) { notes.value = draft; $('exampleHint').hidden = true; }
+  else showExample();
+})();
+</script>
+</body>
+</html>
